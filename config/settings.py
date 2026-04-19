@@ -1,8 +1,8 @@
 import os
 
 # Screen dimensions
-WIDTH = 1280
-HEIGHT = 720
+WIDTH = 1920
+HEIGHT = 1080
 FPS = 60
 
 # Colors

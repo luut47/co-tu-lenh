@@ -5,7 +5,7 @@ from ui.home_screen import HomeScreen
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))
+    screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT), pygame.RESIZABLE)
     pygame.display.set_caption("Cờ Tư Lệnh")
     clock = pygame.time.Clock()
     

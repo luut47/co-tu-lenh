@@ -6,8 +6,8 @@ from config import settings
 class HomeScreen:
     def __init__(self, screen):
         self.screen = screen
-        self.font_small = pygame.font.SysFont(settings.FONT_NAME, 20)
-        self.font_medium = pygame.font.SysFont(settings.FONT_NAME, 24)
+        self.font_small = pygame.font.SysFont(settings.FONT_NAME, 32)
+        self.font_medium = pygame.font.SysFont(settings.FONT_NAME, 44)
         
         # Load images
         self.bg = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'bg.png')).convert()
@@ -19,7 +19,7 @@ class HomeScreen:
         self.btn_exit = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'btn_exit.png')).convert_alpha()
         
         # Scale buttons down
-        btn_w, btn_h = 180, 80
+        btn_w, btn_h = 280, 140
         self.btn_human = pygame.transform.smoothscale(self.btn_human, (btn_w, btn_h))
         self.btn_bot = pygame.transform.smoothscale(self.btn_bot, (btn_w, btn_h))
         self.btn_guide = pygame.transform.smoothscale(self.btn_guide, (btn_w, btn_h))
@@ -36,8 +36,8 @@ class HomeScreen:
         self.right_x = settings.WIDTH - rs_w
         self.right_y = 0
         
-        start_y = 100
-        gap = 35
+        start_y = 200
+        gap = 40
         
         curr_y = start_y
         self.btn_human_rect = self.btn_human.get_rect(center=(self.left_center_x, curr_y))
@@ -61,11 +61,11 @@ class HomeScreen:
         a_w = max(self.author1.get_width(), self.author2.get_width(), self.author3.get_width())
         authors_left_x = self.left_center_x - a_w // 2
         
-        curr_y += 35
+        curr_y += 45
         self.a1_rect = self.author1.get_rect(topleft=(authors_left_x, curr_y))
-        curr_y += 25
+        curr_y += 45
         self.a2_rect = self.author2.get_rect(topleft=(authors_left_x, curr_y))
-        curr_y += 25
+        curr_y += 45
         self.a3_rect = self.author3.get_rect(topleft=(authors_left_x, curr_y))
 
     def draw(self):
