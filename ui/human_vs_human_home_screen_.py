@@ -2,6 +2,8 @@ import pygame
 import os
 import sys
 from config import settings
+from core.board import Board
+from core.board_renderer import BoardRenderer
 
 class HumanVsHumanHomeScreen:
     def __init__(self, screen):
@@ -88,6 +90,16 @@ class HumanVsHumanHomeScreen:
         self.btn_invite_replay_rect = self.btn_invite_replay.get_rect(bottomright=(self.panel_right_rect.right - 20, settings.HEIGHT - 40))
         self.btn_surrender_rect = self.btn_surrender.get_rect(bottomright=(self.btn_invite_replay_rect.left - 20, settings.HEIGHT - 40))
 
+        # Core Game Board
+        # Board dimensions roughly 10/11 ratio
+        board_w = 800
+        board_h = int(board_w * (11 / 10))
+        board_x = 200
+        board_y = (settings.HEIGHT - board_h) // 2
+        
+        self.board = Board()
+        self.board_renderer = BoardRenderer(pygame.Rect(board_x, board_y, board_w, board_h))
+
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
         
@@ -108,6 +120,9 @@ class HumanVsHumanHomeScreen:
         
         # Right Panel
         self.screen.blit(self.panel_right, self.panel_right_rect)
+        
+        # Board
+        self.board_renderer.draw(self.screen, self.board)
         
         # Detail Top
         self.screen.blit(self.panel_detail, self.panel_detail_top_rect)
@@ -131,3 +146,19 @@ class HumanVsHumanHomeScreen:
                     print("Surrender button clicked")
                 elif self.btn_invite_replay_rect.collidepoint(mouse_pos):
                     print("Invite replay button clicked")
+                else:
+                    # Check board interaction
+                    board_pos = self.board_renderer.get_board_pos(*mouse_pos)
+                    if board_pos:
+                        x, y = board_pos
+                        if self.board.selected_piece:
+                            # Try to move
+                            success = self.board.move_piece(x, y)
+                            if not success:
+                                # If move fails, try to select another piece
+                                clicked_piece = self.board.get_piece_at(x, y)
+                                self.board.select_piece(clicked_piece)
+                        else:
+                            # Select piece
+                            clicked_piece = self.board.get_piece_at(x, y)
+                            self.board.select_piece(clicked_piece)
