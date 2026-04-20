@@ -1,0 +1,24 @@
+{
+    "players": {
+        "phuonganh": {
+            "wins": 1,
+            "losses": 0
+        },
+        "minhthang": {
+            "wins": 0,
+            "losses": 1
+        },
+        "phanh": {
+            "wins": 5,
+            "losses": 4
+        },
+        "thang": {
+            "wins": 7,
+            "losses": 5
+        },
+        "minh": {
+            "wins": 0,
+            "losses": 3
+        }
+    }
+}

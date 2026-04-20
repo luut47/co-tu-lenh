@@ -28,6 +28,9 @@ class Piece:
         
     def move_to(self, new_position):
         self.position = new_position
+        # Move all stacked pieces
+        for p in self.stacked_pieces:
+            p.move_to(new_position)
 
     def add_to_stack(self, piece):
         self.stacked_pieces.append(piece)

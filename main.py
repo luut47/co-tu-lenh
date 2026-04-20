@@ -64,6 +64,10 @@ def main():
             if next_screen:
                 current_screen = next_screen
             
+        # Update logical state if screen has update method
+        if hasattr(current_screen, 'update'):
+            current_screen.update()
+
         # Draw on the logical surface
         current_screen.draw()
         

@@ -11,106 +11,125 @@ class MoveType(Enum):
 
 def get_valid_moves(piece, board):
     """
-    Returns a list of dictionaries:
-    [{'type': MoveType, 'to': (x, y), 'extra_data': None}]
+    Returns a list of dicts: {'to': (tx, ty), 'type': MoveType.MOVE}
+    Only checks for physical movement capability, not attacks.
     """
     moves = []
     x, y = piece.position
 
-    def add_move(tx, ty):
+    def can_move_to(tx, ty):
         if tx < 0 or tx >= COLS or ty < 0 or ty >= ROWS:
             return False
-        
-        target_piece = board.get_piece_at(tx, ty)
-        if target_piece:
-            if target_piece.color != piece.color:
-                # Capture
-                moves.append({'type': MoveType.CAPTURE, 'to': (tx, ty), 'extra_data': None})
-            else:
-                # Combine or blocked
-                # Simplification: blocked for now, except for combine logic handled elsewhere
-                pass
-            return False # Blocked
-        else:
-            moves.append({'type': MoveType.MOVE, 'to': (tx, ty), 'extra_data': None})
-            return True # Path clear
+            
+        p = board.get_piece_at(tx, ty)
+        if p:
+            return False # Blocked by any piece for pure movement
+            
+        return True
 
     dirs_straight = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     dirs_diag = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
     dirs_all = dirs_straight + dirs_diag
 
-    # Infantry, Engineer, AntiAir: 1 step straight
+    # 1. Infantry, Engineer, AntiAir
     if piece.type in [PieceType.INFANTRY, PieceType.ENGINEER, PieceType.ANTIAIR]:
         for dx, dy in dirs_straight:
-            add_move(x + dx, y + dy)
+            tx, ty = x + dx, y + dy
+            if can_move_to(tx, ty):
+                moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
 
-    # Militia: 1 step straight + diagonal
+    # 2. Militia
     elif piece.type == PieceType.MILITIA:
         for dx, dy in dirs_all:
-            add_move(x + dx, y + dy)
+            tx, ty = x + dx, y + dy
+            if can_move_to(tx, ty):
+                moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
 
-    # Tank: 1-2 steps straight
+    # 3. Tank
     elif piece.type == PieceType.TANK:
         for dx, dy in dirs_straight:
             for i in range(1, 3):
-                if not add_move(x + dx * i, y + dy * i):
-                    break
-
-    # Commander: unlimited straight move, but capture 1 block
-    elif piece.type == PieceType.COMMANDER:
-        for dx, dy in dirs_straight:
-            for i in range(1, max(COLS, ROWS)):
                 tx, ty = x + dx * i, y + dy * i
-                if tx < 0 or tx >= COLS or ty < 0 or ty >= ROWS:
+                if not can_move_to(tx, ty):
                     break
-                target_piece = board.get_piece_at(tx, ty)
-                if target_piece:
-                    if target_piece.color != piece.color and i == 1:
-                        # Capture only adjacent
-                        moves.append({'type': MoveType.CAPTURE, 'to': (tx, ty), 'extra_data': None})
-                    break
-                else:
-                    moves.append({'type': MoveType.MOVE, 'to': (tx, ty), 'extra_data': None})
+                moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
 
-    # Artillery: 1-3 steps straight + diag. Can jump when capturing?
-    # Simple implementation for now: 1-3 steps.
+    # 4. Artillery
     elif piece.type == PieceType.ARTILLERY:
-        for dx, dy in dirs_all:
+        for dx, dy in dirs_straight:
             for i in range(1, 4):
-                if not add_move(x + dx * i, y + dy * i):
+                tx, ty = x + dx * i, y + dy * i
+                if not can_move_to(tx, ty):
                     break
-                    
-    # AirForce: 1-4 steps, ignores obstacles
+                moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
+
+    # 5. Missile (Assume 1-2 steps)
+    elif piece.type == PieceType.MISSILE:
+        for dx, dy in dirs_straight:
+            for i in range(1, 3):
+                tx, ty = x + dx * i, y + dy * i
+                if not can_move_to(tx, ty):
+                    break
+                moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
+
+    # 6. Air Force (Ignores obstacles, 1-4 steps)
     elif piece.type == PieceType.AIRFORCE:
         for dx, dy in dirs_all:
             for i in range(1, 5):
                 tx, ty = x + dx * i, y + dy * i
                 if tx < 0 or tx >= COLS or ty < 0 or ty >= ROWS:
                     continue
-                target_piece = board.get_piece_at(tx, ty)
-                if target_piece:
-                    if target_piece.color != piece.color:
-                        moves.append({'type': MoveType.CAPTURE, 'to': (tx, ty), 'extra_data': None})
-                else:
-                    moves.append({'type': MoveType.MOVE, 'to': (tx, ty), 'extra_data': None})
+                p = board.get_piece_at(tx, ty)
+                if not p:
+                    moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
 
-    # Navy: only on SEA
+    # 7. Navy (1-4 steps straight, only on Sea)
     elif piece.type == PieceType.NAVY:
-        for dx, dy in dirs_all:
-            tx, ty = x + dx, y + dy
-            if get_zone(tx, ty) == Zone.SEA:
-                add_move(tx, ty)
+        from .board_layout import SEA_COLS_LEFT, RIVER_ROWS
+        for dx, dy in dirs_straight:
+            for i in range(1, 5):
+                tx, ty = x + dx * i, y + dy * i
+                if not can_move_to(tx, ty):
+                    break
+                zone = get_zone(tx, ty)
+                # Navy can move on Sea columns (x in 0,1) at any row
+                if zone == Zone.SEA:
+                    moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
+                # Navy can move across the entire river row (y=5)
+                elif ty in RIVER_ROWS:
+                    moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
 
-    # Filter out invalid moves (e.g., non-Navy on Sea without crossing, or Land pieces on Sea)
-    # This is a simplification. Actual Co Tu Lenh rules are more complex.
+
+
+    # 8. Commander (unlimited straight)
+    elif piece.type == PieceType.COMMANDER:
+        for dx, dy in dirs_straight:
+            for i in range(1, max(COLS, ROWS)):
+                tx, ty = x + dx * i, y + dy * i
+                if not can_move_to(tx, ty):
+                    break
+                moves.append({'to': (tx, ty), 'type': MoveType.MOVE})
+
+    # Post-filter
+    from .board_layout import SEA_COLS_LEFT
     final_moves = []
     for m in moves:
         tx, ty = m['to']
         zone = get_zone(tx, ty)
-        if piece.type != PieceType.NAVY and zone == Zone.SEA:
-            # Only Navy or Airforce can be on Sea. Sometimes Engineer can?
-            if piece.type != PieceType.AIRFORCE:
-                continue
+
+        # AirForce cannot land on Sea
+        if piece.type == PieceType.AIRFORCE and zone == Zone.SEA:
+            continue
+
+        # Non-Navy cannot move onto Sea
+        if zone == Zone.SEA and piece.type not in [PieceType.NAVY]:
+            continue
+
+        # Non-Navy (and non-AirForce) cannot enter River unless allowed by river-crossing rules
+        # Navy is already allowed in sea-column river cells (handled above in Navy block)
+        # Other pieces' river access is handled by check_river_crossing in board.py
+
         final_moves.append(m)
 
     return final_moves
+
