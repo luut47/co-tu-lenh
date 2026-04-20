@@ -2,6 +2,8 @@ import pygame
 import os
 import sys
 from config import settings
+from ui.dialogs.setting_menu import SettingMenu
+from services.sound_manager import SoundManager
 
 class HumanVsBotHomeScreen:
     def __init__(self, screen):
@@ -93,6 +95,9 @@ class HumanVsBotHomeScreen:
         self.btn_undo_rect = self.btn_undo.get_rect(bottomright=(self.btn_play_again_rect.left , settings.HEIGHT - 40))
         self.btn_surrender_rect = self.btn_surrender.get_rect(bottomright=(self.btn_undo_rect.left , settings.HEIGHT - 40))
 
+        self.setting_menu = SettingMenu(self.screen)
+        self.sound_manager = SoundManager()
+
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
         
@@ -126,18 +131,45 @@ class HumanVsBotHomeScreen:
         self.screen.blit(self.btn_surrender, self.btn_surrender_rect)
         self.screen.blit(self.btn_undo, self.btn_undo_rect)
         self.screen.blit(self.btn_play_again, self.btn_play_again_rect)
+
+        self.setting_menu.draw(self.sound_manager.is_sound_on())
         
     def handle_event(self, event):
+        setting_action = self.setting_menu.handle_event(event)
+        if setting_action == "toggle":
+            self.sound_manager.play_button()
+            return self
+
+        elif setting_action == "continue":
+            self.sound_manager.play_button()
+            return self
+
+        elif setting_action == "sound":
+            self.sound_manager.play_button()
+            self.sound_manager.toggle_sound()
+            return self
+
+        elif setting_action == "home":
+            self.sound_manager.play_button()
+            from ui.home_screen import HomeScreen
+            return HomeScreen(self.screen)
+
+        if self.setting_menu.is_open:
+            return self
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 mouse_pos = event.pos
                 if self.btn_setting_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     print("Setting button clicked")
                 elif self.btn_surrender_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     print("Surrender button clicked")
                 elif self.btn_undo_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     print("Undo button clicked")
                 elif self.btn_play_again_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     print("Play again button clicked")
 
     

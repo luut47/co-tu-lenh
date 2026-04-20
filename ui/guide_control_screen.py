@@ -1,6 +1,7 @@
 import os
 import pygame
 from config import settings
+from services.sound_manager import SoundManager
 
 
 class GuideControlScreen:
@@ -37,6 +38,8 @@ class GuideControlScreen:
             "8. Nếu muốn học nhanh quân cờ và luật chơi, quay lại Guide Menu để chọn mục tương ứng.",
         ]
 
+        self.sound_manager = SoundManager()
+
         self.panel_surface = pygame.Surface((self.panel_rect.width, self.panel_rect.height), pygame.SRCALPHA)
         pygame.draw.rect(self.panel_surface, self.panel_fill, (0, 0, self.panel_rect.width, self.panel_rect.height), border_radius=24)
         pygame.draw.rect(self.panel_surface, self.panel_border, (0, 0, self.panel_rect.width, self.panel_rect.height), width=4, border_radius=24)
@@ -70,5 +73,7 @@ class GuideControlScreen:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.back_rect.collidepoint(event.pos):
                 from ui.guide_screen import GuideScreen
+                self.sound_manager.play_button()
+
                 return GuideScreen(self.screen)
         return None

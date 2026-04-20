@@ -9,7 +9,9 @@ from ui.dialogs.player_setup_dialog import PlayerSetupDialog
 from ui.dialogs.swap_sides_dialog import SwapSidesDialog
 from core.turn_timer import TurnTimer
 from services.player_achievement_service import PlayerAchievementService
-
+from ui.dialogs.setting_menu import SettingMenu
+from services.sound_manager import SoundManager
+from core.move_rules import MoveType
 class HumanVsHumanHomeScreen:
     def __init__(self, screen):
         self.screen = screen
@@ -98,6 +100,8 @@ class HumanVsHumanHomeScreen:
 
         # Time tracking for update()
         self.last_time = pygame.time.get_ticks()
+        self.setting_menu = SettingMenu(self.screen)
+        self.sound_manager = SoundManager()
 
     def _init_game_ui(self):
         # Called after dialog finishes
@@ -264,6 +268,9 @@ class HumanVsHumanHomeScreen:
         
         # Board
         self.board_renderer.draw(self.screen, self.board)
+
+
+        self.setting_menu.draw(self.sound_manager.is_sound_on())
         
         # Bottom Buttons
         self.screen.blit(self.btn_surrender, self.btn_surrender_rect)
@@ -330,20 +337,39 @@ class HumanVsHumanHomeScreen:
                     print("Sides swapped")
                 self.reset_match_state()
             return self
+        setting_action = self.setting_menu.handle_event(event)
+        if setting_action == "toggle":
+            self.sound_manager.play_button()
+            return self
 
+        elif setting_action == "continue":
+            self.sound_manager.play_button()
+            return self
+
+        elif setting_action == "sound":
+            self.sound_manager.play_button()
+            self.sound_manager.toggle_sound()
+            return self
+
+        elif setting_action == "home":
+            self.sound_manager.play_button()
+            from ui.home_screen import HomeScreen
+            return HomeScreen(self.screen)
         if self.match_finished:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.btn_invite_replay_rect.collidepoint(event.pos):
+                    self.sound_manager.play_button()
                     self.show_swap_dialog = True
                     self.swap_dialog.reset()
             return self
-
+        if self.setting_menu.is_open:
+            return self
         # Normal game interaction
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 mouse_pos = event.pos
                 if self.btn_surrender_rect.collidepoint(mouse_pos):
-                    # Current player surrenders
+                    self.sound_manager.play_button()
                     winner_color = Color.BLUE if self.board.current_turn == Color.RED else Color.RED
                     self._end_game(winner_color)
                 else:
@@ -355,8 +381,20 @@ class HumanVsHumanHomeScreen:
                             # Try to move
                             piece = self.board.selected_piece
                             from_pos = piece.position
+
+                            move_type = None
+                            for m in self.board.valid_moves:
+                                if m["to"] == (x, y):
+                                    move_type = m["type"]
+                                    break
+
                             success = self.board.move_piece(x, y)
                             if success:
+                                if move_type == MoveType.CAPTURE:
+                                    self.sound_manager.play_eat()
+                                else:
+                                    self.sound_manager.play_move()
+
                                 logs_to_add = self.board.combat_logs if self.board.combat_logs else [f"{piece.type.name}{from_pos} -> {(x, y)}"]
                                 for log in logs_to_add:
                                     if piece.color == self.p1_info['side']:

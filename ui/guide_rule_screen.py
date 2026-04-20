@@ -1,11 +1,13 @@
 import os
 import pygame
 from config import settings
+from services.sound_manager import SoundManager
 
 
 class GuideRuleScreen:
     def __init__(self, screen):
         self.screen = screen
+        self.sound_manager = SoundManager()
 
         self.font_title = pygame.font.SysFont("Segoe UI", 54, bold=True)
         self.font_text = pygame.font.SysFont("Segoe UI", 24)
@@ -75,5 +77,7 @@ class GuideRuleScreen:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.back_rect.collidepoint(event.pos):
                 from ui.guide_screen import GuideScreen
+                self.sound_manager.play_button()
+
                 return GuideScreen(self.screen)
         return None

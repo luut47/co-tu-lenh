@@ -1,6 +1,7 @@
 import os
 import pygame
 from config import settings
+from services.sound_manager import SoundManager
 
 
 class GuideScreen:
@@ -62,6 +63,8 @@ class GuideScreen:
             border_radius=28
         )
 
+        self.sound_manager = SoundManager()
+
     def _draw_text_with_shadow(self, text, font, color, center):
         shadow = font.render(text, True, self.shadow_color)
         shadow_rect = shadow.get_rect(center=(center[0] + 3, center[1] + 3))
@@ -100,18 +103,22 @@ class GuideScreen:
 
             if self.btn_piece_rect.collidepoint(mouse_pos):
                 from ui.guide_piece_screen import GuidePieceScreen
+                self.sound_manager.play_button()
                 return GuidePieceScreen(self.screen)
 
             elif self.btn_rule_rect.collidepoint(mouse_pos):
                 from ui.guide_rule_screen import GuideRuleScreen
+                self.sound_manager.play_button()
                 return GuideRuleScreen(self.screen)
 
             elif self.btn_control_rect.collidepoint(mouse_pos):
                 from ui.guide_control_screen import GuideControlScreen
+                self.sound_manager.play_button()
                 return GuideControlScreen(self.screen)
 
             elif self.btn_back_rect.collidepoint(mouse_pos):
                 from ui.home_screen import HomeScreen
+                self.sound_manager.play_button()
                 return HomeScreen(self.screen)
 
         return None

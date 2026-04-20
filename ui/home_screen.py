@@ -5,6 +5,7 @@ from config import settings
 from ui.guide_screen import GuideScreen
 from ui.human_vs_human_home_screen_ import HumanVsHumanHomeScreen
 from ui.human_vs_bot_choose_level_screeen_ import HumanVsBotChooseLevelScreen
+from services.sound_manager import SoundManager
 
 class HomeScreen:
     def __init__(self, screen):
@@ -71,6 +72,9 @@ class HomeScreen:
         curr_y += 45
         self.a3_rect = self.author3.get_rect(topleft=(authors_left_x, curr_y))
 
+        #sound
+        self.sound_manager = SoundManager()
+
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
         
@@ -91,12 +95,16 @@ class HomeScreen:
             if event.button == 1:
                 mouse_pos = event.pos
                 if self.btn_human_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return HumanVsHumanHomeScreen(self.screen)
                 elif self.btn_bot_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return HumanVsBotChooseLevelScreen(self.screen)
                 elif self.btn_guide_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return GuideScreen(self.screen)
                 elif self.btn_exit_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     print("Exit button clicked")
                     pygame.quit()
                     sys.exit()

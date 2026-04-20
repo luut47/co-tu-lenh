@@ -1,11 +1,13 @@
 import pygame
 import random
 from core.piece import Color
+from services.sound_manager import SoundManager
 
 class PlayerSetupDialog:
     def __init__(self, surface, font_name, width=600, height=500):
         self.surface = surface
         self.width = width
+        self.sound_manager = SoundManager()
         self.height = height
         self.font_large = pygame.font.SysFont(font_name, 48, bold=True)
         self.font_medium = pygame.font.SysFont(font_name, 36)
@@ -78,8 +80,10 @@ class PlayerSetupDialog:
 
                 # Actions
                 if self.btn_start.collidepoint(pos):
+                    self.sound_manager.play_button()
                     self._try_start()
                 elif self.btn_cancel.collidepoint(pos):
+                    self.sound_manager.play_button()
                     self.cancelled = True
                     self.done = True
 

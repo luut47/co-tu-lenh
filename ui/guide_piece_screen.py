@@ -2,7 +2,7 @@ import os
 import pygame
 from config import settings
 from core.piece import PieceType
-
+from services.sound_manager import SoundManager
 
 class GuidePieceScreen:
     IMAGE_CACHE = None
@@ -56,6 +56,8 @@ class GuidePieceScreen:
         ]
 
         self.images = self._get_cached_images()
+
+        self.sound_manager = SoundManager()
 
         self.panel_surface = pygame.Surface((self.panel_rect.width, self.panel_rect.height), pygame.SRCALPHA)
         self.panel_surface.fill((0, 0, 0, 0))
@@ -174,5 +176,6 @@ class GuidePieceScreen:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.back_rect.collidepoint(event.pos):
                 from ui.guide_screen import GuideScreen
+                self.sound_manager = SoundManager()
                 return GuideScreen(self.screen)
         return None

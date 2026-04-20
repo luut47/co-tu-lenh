@@ -1,4 +1,5 @@
 import pygame
+from services.sound_manager import SoundManager
 
 class SwapSidesDialog:
     def __init__(self, surface, font_name, width=500, height=300):
@@ -21,17 +22,21 @@ class SwapSidesDialog:
 
         self.done = False
         self.result = False # True = swap, False = no swap
+        self.sound_manager = SoundManager()
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 pos = event.pos
                 
+                
                 # Actions
                 if self.btn_yes.collidepoint(pos):
+                    self.sound_manager.play_button()
                     self.result = True
                     self.done = True
                 elif self.btn_no.collidepoint(pos):
+                    self.sound_manager.play_button()
                     self.result = False
                     self.done = True
 

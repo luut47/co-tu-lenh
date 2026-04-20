@@ -2,6 +2,7 @@ import pygame
 import os
 from config import settings
 from ui.human_vs_bot_home_screen_ import HumanVsBotHomeScreen
+from services.sound_manager import SoundManager
 
 class HumanVsBotChooseLevelScreen:
     def __init__(self, screen):
@@ -30,6 +31,8 @@ class HumanVsBotChooseLevelScreen:
         self.btn_hard_rect = self.btn_hard.get_rect(center=(center_x, start_y + gap * 2))
         self.btn_asian_rect = self.btn_asian.get_rect(center=(center_x, start_y + gap * 3))
 
+        self.sound_manager = SoundManager()
+
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
         self.screen.blit(self.btn_easy, self.btn_easy_rect)
@@ -42,10 +45,14 @@ class HumanVsBotChooseLevelScreen:
             if event.button == 1:
                 mouse_pos = event.pos
                 if self.btn_easy_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return HumanVsBotHomeScreen(self.screen)
                 elif self.btn_normal_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return HumanVsBotHomeScreen(self.screen)
                 elif self.btn_hard_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return HumanVsBotHomeScreen(self.screen)
                 elif self.btn_asian_rect.collidepoint(mouse_pos):
+                    self.sound_manager.play_button()
                     return HumanVsBotHomeScreen(self.screen)

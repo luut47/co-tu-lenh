@@ -5,6 +5,10 @@ from ui.home_screen import HomeScreen
 
 def main():
     pygame.init()
+    try:
+        pygame.mixer.init()
+    except pygame.error as e:
+        print("Mixer init error:", e)
     # Create window (resizable)
     screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT), pygame.RESIZABLE)
     pygame.display.set_caption("Cờ Tư Lệnh")
