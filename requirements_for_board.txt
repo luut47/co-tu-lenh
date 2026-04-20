@@ -1,0 +1,206 @@
+Bạn hãy implement phần board cho game Cờ Tư Lệnh bằng pygame, theo đúng cấu trúc sau:
+
+core/
+    board.py
+    board_layout.py
+    board_renderer.py
+    piece.py
+    piece_factory.py
+    move_rules.py
+    collab_rules.py
+
+Yêu cầu tổng quát:
+- Không dùng ảnh nền cho bàn cờ.
+- Bàn cờ phải được vẽ hoàn toàn bằng pygame draw primitives.
+- Bàn cờ phải là 1 component dùng chung được cho cả 2 màn:
+  - Human vs Human
+  - Human vs Bot
+- Quân cờ dùng image resource đã có sẵn trong assets/images/items_broads/
+- Thiết kế code theo hướng dễ mở rộng, tách rõ:
+  - dữ liệu bàn cờ
+  - trạng thái bàn cờ
+  - render
+  - luật di chuyển
+  - luật hợp thể
+
+Mục tiêu:
+- Tạo được 1 hệ thống board có thể:
+  - khởi tạo layout bàn cờ
+  - khởi tạo quân cờ
+  - render bàn cờ + quân cờ
+  - chọn quân cờ bằng chuột
+  - highlight nước đi hợp lệ
+  - di chuyển quân
+  - hỗ trợ hợp thể 2 quân theo collab_rules
+- Board này sẽ được import và dùng lại ở cả human_vs_human_home_screen_ và màn human vs bot.
+
+Chi tiết từng file:
+
+1) core/board_layout.py
+- Chứa định nghĩa tĩnh của bàn cờ Cờ Tư Lệnh.
+- Khai báo:
+  - số hàng
+  - số cột
+  - loại từng ô trên bàn cờ
+- Mỗi ô nên có type rõ ràng, ví dụ:
+  - normal
+  - river
+  - sea
+  - ford
+- Cung cấp:
+  - ma trận layout bàn cờ
+  - helper để kiểm tra 1 ô thuộc loại gì
+  - helper kiểm tra tọa độ có hợp lệ không
+- Không chứa logic render.
+- Không chứa logic click chuột.
+- Có thể thêm constant cho vị trí khởi tạo quân mẫu nếu cần.
+
+2) core/piece.py
+- Tạo class Piece.
+- Mỗi quân cờ cần có tối thiểu các thuộc tính:
+  - id
+  - name
+  - side (red / blue hoặc player_1 / player_2)
+  - piece_type
+  - row
+  - col
+  - image
+  - alive
+  - can_collab hoặc metadata cần thiết cho hợp thể
+- Có method cập nhật vị trí.
+- Code gọn, dễ đọc.
+
+3) core/piece_factory.py
+- Có nhiệm vụ tạo Piece từ dữ liệu đầu vào.
+- Map piece_type + side sang image resource tương ứng.
+- Load image bằng pygame.image.load, scale hợp lý theo cell size.
+- Tách phần load tài nguyên ra rõ ràng để tái sử dụng.
+- Cần có:
+  - create_piece(...)
+  - create_initial_pieces(...) hoặc hàm tương đương để sinh quân ban đầu
+- Không viết logic di chuyển ở đây.
+
+4) core/move_rules.py
+- Chứa logic kiểm tra nước đi hợp lệ cho từng quân.
+- Thiết kế để sau này dễ mở rộng từng loại quân.
+- Cần có interface kiểu:
+  - get_valid_moves(board, piece)
+  - is_valid_move(board, piece, target_row, target_col)
+- Có thể dùng helper riêng cho từng loại quân:
+  - _get_infantry_moves(...)
+  - _get_tank_moves(...)
+  - ...
+- Nếu chưa đủ toàn bộ luật game thật, hãy thiết kế khung chuẩn trước, implement demo hợp lý và có TODO rõ ràng ở chỗ chưa hoàn chỉnh.
+- Phải xử lý:
+  - không đi ra ngoài bàn cờ
+  - không đi vào ô đồng minh đang đứng
+  - có thể phân biệt ô địa hình nếu cần
+
+5) core/collab_rules.py
+- Chứa luật hợp thể 2 quân.
+- Tách biệt hoàn toàn khỏi move_rules.
+- Có các hàm kiểu:
+  - can_collab(board, piece_a, piece_b)
+  - perform_collab(board, piece_a, piece_b)
+  - get_collab_result(piece_a, piece_b)
+- Luật hiện tại có thể làm khung tổng quát trước:
+  - kiểm tra 2 quân cùng phe
+  - kiểm tra đứng đủ gần nhau hoặc đúng điều kiện
+  - xác định loại quân mới sau hợp thể
+- Nếu chưa đủ toàn bộ rule chi tiết, hãy viết theo kiến trúc mở rộng được, có comment TODO chỗ cần bổ sung rule thật.
+
+6) core/board.py
+- Đây là class trung tâm quản lý state bàn cờ.
+- Class Board cần quản lý:
+  - layout bàn cờ
+  - danh sách quân cờ
+  - selected_piece
+  - valid_moves hiện tại
+  - lượt chơi hiện tại
+  - lịch sử nước đi nếu cần
+- Cần có các method tối thiểu:
+  - reset()
+  - get_piece_at(row, col)
+  - select_piece(row, col)
+  - move_selected_piece(row, col)
+  - try_collab(row, col)
+  - handle_cell_click(row, col)
+  - switch_turn()
+  - get_all_pieces()
+- Board không render trực tiếp.
+- Board chỉ quản lý logic và state.
+- Khi click:
+  - nếu click vào quân cùng phe trong lượt hiện tại thì chọn quân
+  - nếu đang có selected_piece và click vào ô hợp lệ thì di chuyển
+  - nếu click vào quân cùng phe phù hợp điều kiện hợp thể thì thử collab
+- Thiết kế để human vs human và human vs bot đều dùng chung Board object.
+
+7) core/board_renderer.py
+- Chịu trách nhiệm render bàn cờ và quân cờ lên pygame surface.
+- Không chứa logic game chính.
+- Có class BoardRenderer.
+- Truyền vào:
+  - screen
+  - board
+  - vị trí bắt đầu vẽ bàn cờ
+  - cell size
+- Phải vẽ:
+  - nền các ô theo loại địa hình
+  - lưới bàn cờ
+  - quân cờ
+  - highlight quân đang chọn
+  - highlight các nước đi hợp lệ
+- Cần có tối thiểu:
+  - draw()
+  - draw_grid()
+  - draw_cells()
+  - draw_pieces()
+  - draw_selection()
+  - draw_valid_moves()
+  - cell_to_screen(...)
+  - screen_to_cell(...)
+- Ưu tiên code rõ ràng, dễ chỉnh giao diện sau này.
+
+Yêu cầu tích hợp:
+- Tạo code để Board và BoardRenderer có thể được import vào các màn hình khác.
+- Ví dụ usage mong muốn:
+  - self.board = Board(...)
+  - self.board_renderer = BoardRenderer(screen, self.board, ...)
+  - trong draw(): self.board_renderer.draw()
+  - trong event mouse click: convert pos -> cell rồi gọi self.board.handle_cell_click(...)
+- Không tự sửa các file màn hình khác, nhưng hãy viết code để việc tích hợp vào human_vs_human_home_screen_ và màn human vs bot là đơn giản nhất.
+
+Yêu cầu code:
+- Viết Python sạch, tách class/hàm rõ ràng.
+- Có comment ngắn ở các phần quan trọng.
+- Không nhồi toàn bộ logic vào 1 file.
+- Không hardcode linh tinh trong nhiều chỗ, gom constant hợp lý.
+- Nếu cần dùng cấu hình từ config/settings.py hoặc config/constants.py thì import hợp lý.
+- Giữ code chạy được trong project pygame hiện tại.
+- Nếu có phần rule chưa đủ dữ liệu thật của game Cờ Tư Lệnh, hãy:
+  - dựng sẵn kiến trúc đúng
+  - implement bản demo hợp lý
+  - đánh dấu TODO rõ chỗ cần thay rule thật
+
+Đầu ra mong muốn:
+- Viết đầy đủ code cho 7 file:
+  - board.py
+  - board_layout.py
+  - board_renderer.py
+  - piece.py
+  - piece_factory.py
+  - move_rules.py
+  - collab_rules.py
+- Mỗi file tách riêng bằng tiêu đề rõ ràng.
+- Sau phần code, ghi thêm ngắn gọn:
+  - file nào chịu trách nhiệm gì
+  - cách tích hợp vào human_vs_human_home_screen_
+  - cách tích hợp vào human vs bot screen
+
+Lưu ý thêm:
+- Ưu tiên thiết kế theo OOP vừa phải, không over-engineering.
+- Tránh circular import.
+- Board là nguồn sự thật duy nhất về state.
+- Renderer chỉ đọc state từ Board để vẽ.
+- Rules không được phụ thuộc vào UI screen.
+- Hãy ưu tiên tạo phiên bản chạy được trước, rồi mới tối ưu.

@@ -1,0 +1,210 @@
+Tôi đã gom lại thành một bộ **spec đủ để bạn code game người vs AI** cho Cờ Tư Lệnh, dựa trên 4 nguồn chính: bài luật tiếng Việt bạn gửi, booklet tiếng Anh của AncientChess, phần trợ giúp của Board Game Arena, và một repo mã nguồn công khai đang làm riêng cho Cờ Tư Lệnh. ([Thuthuatchoi][1])
+
+## 1) Luật cốt lõi nên chốt trước khi code
+
+Cờ Tư Lệnh chơi trên **11 đường dọc x 12 đường ngang**, tức **132 giao điểm**; quân đứng trên **giao điểm**, không phải trong ô. Bàn có **biển** ở một bên, **sông** ở giữa chia hai chiến tuyến, và có **2 đoạn ngầm/ford** để mọi phương tiện qua lại; phần còn lại của sông là nước sâu với các hạn chế riêng. Bài tiếng Việt dùng hệ tọa độ số `0..11` theo trục dọc và `0..10` theo trục ngang; BGA diễn giải tương đương bằng hệ 11x12 trên các giao điểm. ([Thuthuatchoi][1])
+
+Mỗi bên có **19 quân**, gồm **11 loại**: Tư lệnh x1, Bộ binh x2, Xe tăng x2, Dân quân x1, Công binh x2, Pháo binh x2, Cao xạ x2, Tên lửa x1, Không quân x2, Hải quân x2, Sở chỉ huy x2. Mục tiêu thắng theo luật gốc là **bắt Tư lệnh**, hoặc làm đối phương mất trọn một binh chủng chiến lược: **cả 2 máy bay**, **cả 2 tàu chiến**, hoặc **toàn bộ 6 quân bộ chiến chủ lực** (2 bộ binh, 2 pháo binh, 2 xe tăng). Bài tiếng Việt còn nêu thêm các điều kiện kết thúc theo chấm điểm/thời gian và trường hợp Tư lệnh bị dồn hết đường thoái lui hoặc không còn quân bảo vệ. ([Thuthuatchoi][1])
+
+Các luật di chuyển quan trọng nhất:
+
+* **Bộ binh / Công binh / Cao xạ**: đi thẳng 1 bước theo 4 hướng; bài tiếng Việt xếp chúng vào nhóm “đi bộ”. ([Thuthuatchoi][1])
+* **Dân quân**: đi 1 bước, cả thẳng lẫn chéo. ([Thuthuatchoi][1])
+* **Xe tăng**: đi thẳng 1-2 bước; có luật bắn/ăn mục tiêu trên biển mà không thế chỗ trong một số trường hợp. ([Thuthuatchoi][1])
+* **Pháo binh**: đi/ăn 1-3 bước theo thẳng hoặc chéo 45 độ; được **vượt khối chắn khi ăn**. ([Thuthuatchoi][1])
+* **Tên lửa phòng không**: vùng khống chế chống máy bay lớn hơn cao xạ; booklet mô tả tầm chống không là 2 bước thẳng hoặc 1 bước chéo. ([Thuthuatchoi][1])
+* **Máy bay**: đi 1-4 bước thẳng hoặc chéo, **bay vượt khối chắn**, có thể **ăn rồi quay lại điểm xuất phát** nếu không ăn máy bay đối phương; đi xuyên vùng chống không sẽ bị bắn rơi, trừ một số trường hợp “đổi 1-1” hoặc khi đã thành quân anh hùng. ([Thuthuatchoi][1])
+* **Hải quân**: chỉ hoạt động trên biển/bờ biển/sông theo giới hạn địa hình; có vũ khí đối hải và pháo bắn vào đất liền. Booklet tiếng Anh còn nói tàu có thể dùng cả ngư lôi lẫn pháo trong cùng lượt, tức có thể ăn 2 mục tiêu trong 1 turn. ([Thuthuatchoi][1])
+* **Tư lệnh**: đi thẳng không giới hạn nếu không bị chặn, nhưng **chỉ ăn 1 nấc**; không đi chéo; chỉ Tư lệnh mới được vào **Sở chỉ huy**; không được “mặt đối mặt” với Tư lệnh đối phương trên một đường trống. ([Thuthuatchoi][1])
+* **Sở chỉ huy**: đứng yên, không đánh, là vật cản và nơi Tư lệnh có thể chồng lên để ẩn nấp. ([Thuthuatchoi][1])
+
+Các luật đặc biệt bắt buộc phải có trong engine:
+
+* **Ăn không thế chỗ** khi bắn giữa đất-liền và biển trong các trường hợp sâu trong biển/sâu trong đất; ở vị trí bờ biển thì thường phải thế chỗ. ([Thuthuatchoi][1])
+* **Vượt sông**: mọi quân qua được ở 2 đoạn ngầm; ngoài ngầm, chỉ một số quân nhẹ/cơ động qua trực tiếp, còn pháo/cao xạ/tên lửa nặng phải nhờ **công binh cõng** hoặc qua bằng nước ăn quân. ([Thuthuatchoi][1])
+* **Vùng cấm trên không**: cao xạ tạo vùng chống không nhỏ, tên lửa tạo vùng lớn, hải quân cũng có vùng chống không cự ly ngắn. ([Thuthuatchoi][1])
+* **Quân anh hùng**: quân nào trực tiếp chiếu Tư lệnh khiến Tư lệnh phải chạy thì được phong; sau đó được **+1 tầm đi/ăn**, được **đi chéo**, và máy bay anh hùng thì miễn nhiễm toàn bộ hỏa lực phòng không. ([Thuthuatchoi][1])
+* **Xếp chồng / vận tải quân**: booklet và BGA đều có cơ chế mang quân, di chuyển theo stack, rồi bung quân ra trong cùng lượt; đây là điểm làm game khó hơn cờ vua/cờ tướng rất nhiều. ([VerySpecial][2])
+
+## 2) Spec kỹ thuật nên dùng trong code
+
+Tôi khuyên bạn dùng **tọa độ nội bộ kiểu đại số** `a1..k12` cho code, rồi map sang kiểu đọc Việt `y,x` khi hiển thị. BGA và repo TypeScript công khai đều thuận lợi hơn khi dùng hệ file/rank như vậy, còn bài tiếng Việt thì giúp bạn map lại sang cách gọi truyền thống nếu muốn. ([Board Game Arena][3])
+
+Với bàn cờ này, đừng model kiểu “ô vuông thuần” như chess 8x8. Hãy model theo:
+
+* **Point**: 132 giao điểm có thể đứng quân.
+* **Zone của điểm**: `SEA`, `COAST`, `LAND`.
+* **Edge đặc biệt giữa rank 6 và 7**: edge nào là **ford**, edge nào là **deep river**.
+* **Air-defense overlay**: không phải ô bị chiếm, mà là tập điểm/đường bay bị cấm đối với máy bay.
+* **Stack state**: một điểm có thể chứa 1 stack, trong đó có `carrier` + `passengers`.
+
+Một bộ kiểu dữ liệu tối thiểu:
+
+```ts
+type Color = 'red' | 'blue';
+
+type PieceType =
+  | 'Commander'
+  | 'Infantry'
+  | 'Tank'
+  | 'Militia'
+  | 'Engineer'
+  | 'Artillery'
+  | 'AntiAir'
+  | 'Missile'
+  | 'AirForce'
+  | 'Navy'
+  | 'Headquarters';
+
+type Square = { file: 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'; rank: 1|2|3|4|5|6|7|8|9|10|11|12 };
+
+type Piece = {
+  id: string;
+  color: Color;
+  type: PieceType;
+  heroic: boolean;
+};
+
+type Stack = {
+  carrier: Piece;
+  carried: Piece[];
+};
+
+type Move =
+  | { kind: 'move'; from: Square; to: Square }
+  | { kind: 'capture'; from: Square; to: Square; stay: boolean }
+  | { kind: 'combine'; from: Square; to: Square }
+  | { kind: 'deploy'; from: Square; steps: { pieceId: string; to: Square; stay?: boolean }[] }
+  | { kind: 'bomb-and-return'; from: Square; target: Square; returnTo: Square }
+  | { kind: 'navy-double-fire'; from: Square; targets: Square[] };
+```
+
+Điểm mấu chốt là **move của game này không phải lúc nào cũng là “1 quân đi từ A sang B”**. Máy bay có thể “đi - ăn - quay về”, stack có thể “bung nhiều quân”, hải quân theo booklet có thể “bắn 2 mục tiêu”, nên move phải hỗ trợ **composite action** ngay từ đầu. ([VerySpecial][2])
+
+## 3) Bàn khởi tạo chuẩn để bạn hard-code ngay
+
+Bố trí chuẩn **không được bài tiếng Việt viết thành tọa độ text**, mà nằm trong hình xếp bàn. Từ sơ đồ trong booklet, tôi suy ra cấu hình chuẩn như sau; bạn nên để nó ở dạng JSON/config để dễ chỉnh nếu sau này muốn bám đúng một board vật lý khác. ([VerySpecial][2])
+
+**Red (dưới):**
+
+* `g1` Commander
+* `b2` Navy, `e2` AirForce, `f2` Headquarters, `h2` Headquarters, `i2` AirForce
+* `d3` Artillery, `g3` Missile, `j3` Artillery
+* `c4` Navy, `e4` AntiAir, `f4` Tank, `h4` Tank, `i4` AntiAir
+* `c5` Infantry, `d5` Engineer, `g5` Militia, `j5` Engineer, `k5` Infantry ([VerySpecial][2])
+
+**Blue (trên):**
+
+* `g12` Commander
+* `b11` Navy, `e11` AirForce, `f11` Headquarters, `h11` Headquarters, `i11` AirForce
+* `d10` Artillery, `g10` Missile, `j10` Artillery
+* `c9` Navy, `e9` AntiAir, `f9` Tank, `h9` Tank, `i9` AntiAir
+* `c8` Infantry, `d8` Engineer, `g8` Militia, `j8` Engineer, `k8` Infantry ([VerySpecial][2])
+
+## 4) Checklist cho move generator
+
+Đây là thứ tự nên làm để engine không vỡ:
+
+1. Sinh nước đi cơ bản theo từng quân, **chưa xét check/checkmate**.
+2. Thêm ràng buộc địa hình: biển, bờ biển, sông, ngầm, nước sâu.
+3. Thêm capture mode: **thế chỗ** và **đứng tại chỗ**.
+4. Thêm **air-defense** và đường bay máy bay.
+5. Thêm **commander line-of-sight** và luật “mặt đối mặt là thua ngay”.
+6. Thêm **heroic promotion**.
+7. Thêm **stack/combine/deploy**.
+8. Thêm **terminal conditions**: bắt Tư lệnh, mất hết 2 máy bay, hết 2 tàu, hoặc mất 6 quân bộ chiến chủ lực. ([Board Game Arena][3])
+
+Một mẹo rất đáng giá: thay vì kiểm tra luật bằng if/else rải rác, hãy tách thành các hàm:
+
+* `canOccupy(square, piece, state)`
+* `canTraverse(edge, piece, state)`
+* `captureMode(attacker, from, to, state) => 'replace' | 'stay' | 'return' | 'double-fire'`
+* `airspaceViolations(path, piece, state)`
+* `stackRules(from, to, movingPiece, targetStack)`
+
+Làm vậy thì AI và UI sẽ dùng chung đúng một luật.
+
+## 5) Thiết kế AI: bản mạnh vừa đủ để chơi được
+
+Với game này, tôi sẽ **không** làm AI kiểu random hay minimax sơ sài như cờ vua mẫu. Nên bắt đầu bằng:
+
+* **alpha-beta negamax**
+* **iterative deepening**
+* **transposition table + Zobrist hashing**
+* **move ordering**
+* **quiescence search** cho các pha có bắn/ăn liên hoàn, nhất là máy bay, pháo, hải quân, stack deploy.
+
+Hàm đánh giá nên lấy **giá trị quân theo thang điểm luật gốc** làm nền: Bộ binh/Công binh/Cao xạ/Dân quân = 10; Xe tăng/Tên lửa = 20; Pháo = 30; Máy bay = 40; Tàu chiến = 80. Commander là terminal piece; Headquarters có giá trị riêng trong booklet nhưng trong AI bạn nên xem nó là **giá trị chiến thuật** hơn là vật chất thuần. ([Thuthuatchoi][1])
+
+Ngoài material, evaluation nên cộng thêm:
+
+* an toàn Tư lệnh và HQ
+* ưu thế trên không
+* ưu thế trên biển
+* kiểm soát 2 ngầm/ford
+* số stack đang tạo được đòn bung quân
+* quân anh hùng
+* khả năng kết liễu theo “mất cả division”
+  Đây là nơi AI của Cờ Tư Lệnh khác xa chess engine thường.
+
+## 6) Tài nguyên đáng dùng ngay
+
+1. **Bài luật tiếng Việt** bạn gửi: tốt nhất để bám đúng thuật ngữ Việt, mục tiêu ván cờ, loại quân, cách vượt sông, quân anh hùng, chấm điểm và điều kiện kết thúc. ([Thuthuatchoi][1])
+
+2. **Booklet AncientChess PDF**: tốt để lấy bản tóm tắt tiếng Anh, bảng quân - cách đi - đặc tính, hình setup chuẩn, và các luật về carrier/stack/air defense. ([VerySpecial][2])
+
+3. **Trang AncientChess chính**: có link tới **video hướng dẫn** và **sample games**, rất hữu ích nếu bạn muốn kiểm tra lại những luật khó biểu diễn bằng văn bản. ([Ancient Chess][4])
+
+4. **Board Game Arena help**: cực hữu ích để chuyển luật thành **state machine triển khai được**, nhất là phần stack, deploy, airspace, coast capture, và các ví dụ unusual play. ([Board Game Arena][3])
+
+5. **`mnoyd/cotulenh-monorepo`**: repo TypeScript công khai có tách rõ `@cotulenh/core` cho game logic, `@cotulenh/board` cho board UI, và app demo. Đây là tài nguyên tốt nhất nếu bạn muốn học cách chia package `engine / board / app`. ([GitHub][5])
+
+6. **`mnoyd/cotulenh-board`**: thư viện board UI JavaScript riêng cho Cờ Tư Lệnh; repo này đã bị archive vào 14/04/2025 nhưng vẫn hữu ích để học cách vẽ bàn, kéo-thả, highlight stack, theme hóa board. ([GitHub][6])
+
+## 7) Những chỗ mơ hồ nên khóa bằng config
+
+Có vài chỗ giữa các nguồn **không hoàn toàn khớp**, nên cách tốt nhất là cho engine có `ruleset`:
+
+```ts
+type RuleSet = {
+  maxStackSize: number | null;
+  airForceCanCarryTank: boolean;
+  tankPassengerRule: 'one-passenger' | 'infantry-plus-one';
+  navyCanDoubleFire: boolean;
+  fordSquares: Square[];
+  useBgaCompatibility: boolean;
+};
+```
+
+Ba chỗ mơ hồ nhất:
+
+* **Sức chở của Tank/AirForce/Navy**: booklet nói Tank hoặc AirForce chở được Commander/Infantry/Militia, còn Navy chở được nhiều loại và “several may be carried”; BGA lại cho giới hạn stack cụ thể và còn cho AirForce chở Tank. ([VerySpecial][2])
+* **Hải quân có bắn 2 mục tiêu trong 1 turn hay không**: booklet nói có thể dùng cả torpedo lẫn artillery trong một lượt; BGA help không nhấn mạnh luật này như một action riêng. ([VerySpecial][2])
+* **Tọa độ chính xác của 2 ngầm**: bài tiếng Việt xác nhận có 2 ngầm, BGA xác nhận heavy pieces chỉ qua 2 bank positions, nhưng tọa độ text không được nêu rõ trong bài; vì vậy nên giữ `fordSquares` là config. ([Thuthuatchoi][1])
+
+Một chi tiết nữa: dòng “Engineer controls air space” trong bảng booklet tiếng Anh nhìn rất giống lỗi biên tập, vì bài tiếng Việt và BGA đều quy vùng chống không cho **Cao xạ, Tên lửa, Hải quân**, không phải Công binh. Khi code, nên xem đó là typo trừ khi bạn cố ý làm bản mô phỏng y nguyên booklet đó. ([VerySpecial][2])
+
+## 8) Lộ trình build ngắn nhất để ra bản chơi được
+
+* Milestone 1: board + render quân + đi hợp lệ cơ bản
+* Milestone 2: ăn quân + đứng tại chỗ + địa hình biển/sông
+* Milestone 3: commander/HQ/hero/air-defense
+* Milestone 4: stack + combine + deploy
+* Milestone 5: terminal conditions + replay notation
+* Milestone 6: AI alpha-beta
+* Milestone 7: tuning evaluation + opening book nhỏ + test suite
+
+Nếu chọn một stack công nghệ dễ làm nhanh, tôi khuyên:
+
+* **Core engine**: TypeScript hoặc C#
+* **Board UI**: web canvas/SVG
+* **AI**: chạy cùng process ở mức đầu, sau tách worker nếu cần
+
+Ở lượt tiếp theo, tôi sẽ viết luôn cho bạn **bộ khung engine hoàn chỉnh** bằng **C#** hoặc **TypeScript**, gồm `Board`, `Piece`, `Move`, `MoveGenerator`, `RuleSet`, `Evaluator`, `Search`.
+
+[1]: https://thuthuatchoi.com/huong-dan-cach-choi-co-tu-lenh.html "https://thuthuatchoi.com/huong-dan-cach-choi-co-tu-lenh.html"
+[2]: https://veryspecial.us/free-downloads/AncientChess.com-CommanderChess.pdf "https://veryspecial.us/free-downloads/AncientChess.com-CommanderChess.pdf"
+[3]: https://sr.boardgamearena.com/doc/Gamehelpcommanderchess "https://sr.boardgamearena.com/doc/Gamehelpcommanderchess"
+[4]: https://ancientchess.com/commander-chess/ "https://ancientchess.com/commander-chess/"
+[5]: https://github.com/mnoyd/cotulenh-monorepo "https://github.com/mnoyd/cotulenh-monorepo"
+[6]: https://github.com/mnoyd/cotulenh-board "https://github.com/mnoyd/cotulenh-board"
