@@ -15,4 +15,4 @@ ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
 IMAGES_DIR = os.path.join(ASSETS_DIR, 'images')
 
 # Default font
-FONT_NAME = 'arial'
+FONT_NAME = 'Segoe UI'

@@ -27,7 +27,7 @@ class PlayerSetupDialog:
 
         # UI elements rects
         pad_x = 40
-        pad_y = 60
+        pad_y = 80
         input_w = 200
         input_h = 40
 
@@ -165,14 +165,15 @@ class PlayerSetupDialog:
     def _draw_player_section(self, label, input_rect, name, active, btn_blue, btn_red, btn_rand, side):
         # Label
         lbl = self.font_medium.render(label, True, (50, 50, 50))
-        self.surface.blit(lbl, (input_rect.left, input_rect.top - 35))
+        self.surface.blit(lbl, (input_rect.left, input_rect.top - lbl.get_height() - 10))
 
         # Input box
         color = (0, 120, 215) if active else (150, 150, 150)
         pygame.draw.rect(self.surface, (255, 255, 255), input_rect)
         pygame.draw.rect(self.surface, color, input_rect, 2)
         txt = self.font_medium.render(name, True, (0, 0, 0))
-        self.surface.blit(txt, (input_rect.left + 10, input_rect.top + 5))
+        txt_y = input_rect.top + (input_rect.height - txt.get_height()) // 2
+        self.surface.blit(txt, (input_rect.left + 10, txt_y))
 
         # Side buttons
         self._draw_toggle_button(btn_blue, "Blue", (100, 149, 237), side == Color.BLUE)

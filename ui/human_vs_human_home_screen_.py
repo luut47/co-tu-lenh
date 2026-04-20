@@ -5,6 +5,7 @@ from config import settings
 from core.board import Board
 from core.board_renderer import BoardRenderer
 from core.piece import Color
+from core.move_rules import MoveType
 from ui.dialogs.player_setup_dialog import PlayerSetupDialog
 from ui.dialogs.swap_sides_dialog import SwapSidesDialog
 from core.turn_timer import TurnTimer
@@ -346,30 +347,39 @@ class HumanVsHumanHomeScreen:
                     # Current player surrenders
                     winner_color = Color.BLUE if self.board.current_turn == Color.RED else Color.RED
                     self._end_game(winner_color)
-                else:
-                    # Check board interaction
-                    board_pos = self.board_renderer.get_board_pos(*mouse_pos)
-                    if board_pos:
-                        x, y = board_pos
-                        if self.board.selected_piece:
-                            # Try to move
-                            piece = self.board.selected_piece
-                            from_pos = piece.position
-                            success = self.board.move_piece(x, y)
-                            if success:
-                                logs_to_add = self.board.combat_logs if self.board.combat_logs else [f"{piece.type.name}{from_pos} -> {(x, y)}"]
-                                for log in logs_to_add:
-                                    if piece.color == self.p1_info['side']:
-                                        self.p1_moves.append(log)
-                                    else:
-                                        self.p2_moves.append(log)
-                                self._sync_timers()
-                            else:
-                                # If move fails, try to select another piece
-                                clicked_piece = self.board.get_piece_at(x, y)
-                                self.board.select_piece(clicked_piece)
-                        else:
-                            # Select piece
+                    return self
+
+            if event.button in (1, 3):
+                mouse_pos = event.pos
+                board_pos = self.board_renderer.get_board_pos(*mouse_pos)
+                if board_pos:
+                    x, y = board_pos
+                    if self.board.selected_piece:
+                        piece = self.board.selected_piece
+                        from_pos = piece.position
+                        matching_moves = self.board.get_matching_moves(x, y)
+                        preferred_type = None
+
+                        if event.button == 1:
+                            if any(move["type"] == MoveType.CAPTURE_REPLACE for move in matching_moves):
+                                preferred_type = MoveType.CAPTURE_REPLACE
+                        elif event.button == 3:
+                            if any(move["type"] == MoveType.AIRSTRIKE_RETURN for move in matching_moves):
+                                preferred_type = MoveType.AIRSTRIKE_RETURN
+
+                        success = self.board.move_piece(x, y, preferred_type=preferred_type)
+                        if success:
+                            logs_to_add = self.board.combat_logs if self.board.combat_logs else [f"{piece.type.name}{from_pos} -> {(x, y)}"]
+                            for log in logs_to_add:
+                                if piece.color == self.p1_info['side']:
+                                    self.p1_moves.append(log)
+                                else:
+                                    self.p2_moves.append(log)
+                            self._sync_timers()
+                        elif event.button == 1:
                             clicked_piece = self.board.get_piece_at(x, y)
                             self.board.select_piece(clicked_piece)
+                    elif event.button == 1:
+                        clicked_piece = self.board.get_piece_at(x, y)
+                        self.board.select_piece(clicked_piece)
         return self

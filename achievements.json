@@ -27,6 +27,22 @@
         "han": {
             "wins": 0,
             "losses": 1
+        },
+        "s": {
+            "wins": 4,
+            "losses": 2
+        },
+        "a": {
+            "wins": 2,
+            "losses": 4
+        },
+        "sa": {
+            "wins": 1,
+            "losses": 0
+        },
+        "gf": {
+            "wins": 0,
+            "losses": 1
         }
     }
 }

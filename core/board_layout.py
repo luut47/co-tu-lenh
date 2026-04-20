@@ -1,43 +1,65 @@
 from enum import Enum
 
+
 class Zone(Enum):
     LAND = "LAND"
     SEA = "SEA"
     RIVER = "RIVER"
     FORD = "FORD"
 
-# Board dimensions
+
 COLS = 11
 ROWS = 12
 
-# Zones definitions
-# River spans horizontally at row 5
 RIVER_ROWS = [5]
+SEA_COLS = [0, 1]
+FORD_COLS = [5, 7]
+RIVER_MOUTH_DEPTH = 3
 
-# Fords are specific X coordinates crossing the river
-FORD_COLS = [4, 6]
 
-# Sea covers specific columns on the left (0, 1)
-SEA_COLS_LEFT = [0, 1]
+def in_bounds(x, y):
+    return 0 <= x < COLS and 0 <= y < ROWS
+
+
+def is_sea(x, y):
+    return in_bounds(x, y) and x in SEA_COLS
+
+
+def is_river(x, y):
+    return in_bounds(x, y) and y in RIVER_ROWS and x not in SEA_COLS
+
+
+def is_ford(x, y):
+    return in_bounds(x, y) and x in FORD_COLS and y in RIVER_ROWS and x not in SEA_COLS
+
+
+def is_coast_border(x, y):
+    if not in_bounds(x, y):
+        return False
+    if get_zone(x, y) != Zone.LAND:
+        return False
+    return any(in_bounds(nx, ny) and get_zone(nx, ny) == Zone.SEA for nx, ny in (
+        (x + 1, y),
+        (x - 1, y),
+        (x, y + 1),
+        (x, y - 1),
+    ))
+
+
+def is_river_mouth(x, y):
+    if not in_bounds(x, y) or y not in RIVER_ROWS:
+        return False
+    river_edge_x = max(SEA_COLS) + 1
+    return river_edge_x - (RIVER_MOUTH_DEPTH - 1) <= x <= river_edge_x
+
 
 def get_zone(x, y):
-    """
-    Returns the Zone for a given (x, y) intersection.
-    """
-    if x < 0 or x >= COLS or y < 0 or y >= ROWS:
-        return None # Out of bounds
-        
-    # Check Sea
-    if x in SEA_COLS_LEFT:
+    if not in_bounds(x, y):
+        return None
+    if is_ford(x, y):
+        return Zone.FORD
+    if is_sea(x, y):
         return Zone.SEA
-        
-    # Check River & Ford
-    if y in RIVER_ROWS:
-        # Ford is only defined on the river rows
-        if x in FORD_COLS:
-            return Zone.FORD
-        # If it's not a ford, it's river
+    if is_river(x, y):
         return Zone.RIVER
-        
-    # Default is land
     return Zone.LAND
