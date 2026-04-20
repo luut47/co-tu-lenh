@@ -2,6 +2,8 @@ import pygame
 import os
 import sys
 from config import settings
+from ui.human_vs_human_home_screen_ import HumanVsHumanHomeScreen
+from ui.human_vs_bot_choose_level_screeen_ import HumanVsBotChooseLevelScreen
 
 class HomeScreen:
     def __init__(self, screen):
@@ -88,9 +90,9 @@ class HomeScreen:
             if event.button == 1:
                 mouse_pos = event.pos
                 if self.btn_human_rect.collidepoint(mouse_pos):
-                    print("Human button clicked")
+                    return HumanVsHumanHomeScreen(self.screen)
                 elif self.btn_bot_rect.collidepoint(mouse_pos):
-                    print("Bot button clicked")
+                    return HumanVsBotChooseLevelScreen(self.screen)
                 elif self.btn_guide_rect.collidepoint(mouse_pos):
                     print("Guide button clicked")
                 elif self.btn_exit_rect.collidepoint(mouse_pos):

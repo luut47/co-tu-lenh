@@ -3,7 +3,7 @@ import os
 import sys
 from config import settings
 
-class HumanVsHumanHomeScreen:
+class HumanVsBotHomeScreen:
     def __init__(self, screen):
         self.screen = screen
         self.font_small = pygame.font.SysFont(settings.FONT_NAME, 32)
@@ -21,15 +21,17 @@ class HumanVsHumanHomeScreen:
         self.panel_detail = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'panel_show_user_moved_detail_.png')).convert_alpha()
         
         self.btn_setting = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'btn_setting_.png')).convert_alpha()
+        
         self.btn_surrender = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'btn_surrender.png')).convert_alpha()
-        self.btn_invite_replay = pygame.image.load(os.path.join(settings.IMAGES_DIR,'btn_invite_replay.png')).convert_alpha()
+        self.btn_undo = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'btn_bot_mode_undo_moved_.png')).convert_alpha()
+        self.btn_play_again = pygame.image.load(os.path.join(settings.IMAGES_DIR, 'btn_play_again_bot_.png')).convert_alpha()
         # Scale UI assets down to prevent overlapping
         face_size = (100, 100)
         slide_size = (300, 60)
         setting_size = (60, 60)
         panel_w, panel_h = 450, 750
         detail_w, detail_h = 400, 200
-        btn_w, btn_h = 180, 60
+        btn_w, btn_h = 140, 50
         
         self.icon_human = pygame.transform.smoothscale(self.icon_human, face_size)
         self.icon_human_2 = pygame.transform.smoothscale(self.icon_human_2, face_size)
@@ -40,7 +42,8 @@ class HumanVsHumanHomeScreen:
         
         self.btn_setting = pygame.transform.smoothscale(self.btn_setting, setting_size)
         self.btn_surrender = pygame.transform.smoothscale(self.btn_surrender, (btn_w, btn_h))
-        self.btn_invite_replay = pygame.transform.smoothscale(self.btn_invite_replay, (btn_w, btn_h))
+        self.btn_undo = pygame.transform.smoothscale(self.btn_undo, (btn_w, btn_h))
+        self.btn_play_again = pygame.transform.smoothscale(self.btn_play_again, (btn_w, btn_h))
         
         # Resize small icons for detail panel
         detail_icon_size = (60, 60)
@@ -51,7 +54,7 @@ class HumanVsHumanHomeScreen:
         
         # Top Player (Blue)
         self.icon_human_rect = self.icon_human.get_rect(topleft=(300, 30))
-        self.name1_label = self.font_medium.render("Name", True, settings.BLACK)
+        self.name1_label = self.font_medium.render("Human", True, settings.BLACK)
         self.name1_rect = self.name1_label.get_rect(midleft=(self.icon_human_rect.right + 20, self.icon_human_rect.centery))
         
         self.slide_time_top_rect = self.slide_time.get_rect(center=(settings.WIDTH // 2, self.icon_human_rect.centery))
@@ -60,7 +63,7 @@ class HumanVsHumanHomeScreen:
         
         # Bottom Player (Red)
         self.icon_human_2_rect = self.icon_human_2.get_rect(bottomleft=(300, settings.HEIGHT - 30))
-        self.name2_label = self.font_medium.render("Name", True, settings.BLACK)
+        self.name2_label = self.font_medium.render("Bot", True, settings.BLACK)
         self.name2_rect = self.name2_label.get_rect(midleft=(self.icon_human_2_rect.right + 20, self.icon_human_2_rect.centery))
         
         self.slide_time_bottom_rect = self.slide_time.get_rect(center=(settings.WIDTH // 2, self.icon_human_2_rect.centery))
@@ -85,8 +88,9 @@ class HumanVsHumanHomeScreen:
         self.small_icon2_rect = self.small_icon_human_2.get_rect(topleft=(self.panel_detail_bottom_rect.left + 30, self.panel_detail_bottom_rect.top + 30))
         
         # Bottom Buttons
-        self.btn_invite_replay_rect = self.btn_invite_replay.get_rect(bottomright=(self.panel_right_rect.right - 20, settings.HEIGHT - 40))
-        self.btn_surrender_rect = self.btn_surrender.get_rect(bottomright=(self.btn_invite_replay_rect.left - 20, settings.HEIGHT - 40))
+        self.btn_play_again_rect = self.btn_play_again.get_rect(bottomright=(self.panel_right_rect.right - 10, settings.HEIGHT - 40))
+        self.btn_undo_rect = self.btn_undo.get_rect(bottomright=(self.btn_play_again_rect.left - 10, settings.HEIGHT - 40))
+        self.btn_surrender_rect = self.btn_surrender.get_rect(bottomright=(self.btn_undo_rect.left - 10, settings.HEIGHT - 40))
 
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
@@ -119,7 +123,8 @@ class HumanVsHumanHomeScreen:
         
         # Bottom Buttons
         self.screen.blit(self.btn_surrender, self.btn_surrender_rect)
-        self.screen.blit(self.btn_invite_replay, self.btn_invite_replay_rect)
+        self.screen.blit(self.btn_undo, self.btn_undo_rect)
+        self.screen.blit(self.btn_play_again, self.btn_play_again_rect)
         
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -129,5 +134,7 @@ class HumanVsHumanHomeScreen:
                     print("Setting button clicked")
                 elif self.btn_surrender_rect.collidepoint(mouse_pos):
                     print("Surrender button clicked")
-                elif self.btn_invite_replay_rect.collidepoint(mouse_pos):
-                    print("Invite replay button clicked")
+                elif self.btn_undo_rect.collidepoint(mouse_pos):
+                    print("Undo button clicked")
+                elif self.btn_play_again_rect.collidepoint(mouse_pos):
+                    print("Play again button clicked")
