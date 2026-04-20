@@ -11,16 +11,14 @@ COLS = 11
 ROWS = 12
 
 # Zones definitions
-# River spans horizontally between row 5 and 6
-RIVER_ROWS = [5, 6]
+# River spans horizontally at row 5
+RIVER_ROWS = [5]
 
 # Fords are specific X coordinates crossing the river
 FORD_COLS = [4, 6]
 
-# Sea covers specific columns (e.g. left side)
-# We can adjust this to match the exact rules or images
+# Sea covers specific columns on the left (0, 1)
 SEA_COLS_LEFT = [0, 1]
-SEA_COLS_RIGHT = [9, 10]
 
 def get_zone(x, y):
     """
@@ -30,7 +28,7 @@ def get_zone(x, y):
         return None # Out of bounds
         
     # Check Sea
-    if x in SEA_COLS_LEFT or x in SEA_COLS_RIGHT:
+    if x in SEA_COLS_LEFT:
         return Zone.SEA
         
     # Check River & Ford

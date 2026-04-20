@@ -130,7 +130,11 @@ class BoardRenderer:
         for move in board.valid_moves:
             mx, my = move['to']
             px, py = self._get_pixel_pos(mx, my)
-            color = self.COLOR_MOVE if move['type'] != MoveType.CAPTURE else self.COLOR_ATTACK
+            color = self.COLOR_MOVE
+            if move['type'] == MoveType.CAPTURE:
+                color = self.COLOR_ATTACK
+            elif move['type'] == MoveType.COMBINE:
+                color = (255, 255, 0) # Yellow for combine
             pygame.draw.circle(surface, color, (int(px), int(py)), int(self.cell_w * 0.2))
 
         # 4. Draw Pieces
