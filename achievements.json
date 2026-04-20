@@ -19,6 +19,14 @@
         "minh": {
             "wins": 0,
             "losses": 3
+        },
+        "ha": {
+            "wins": 1,
+            "losses": 0
+        },
+        "han": {
+            "wins": 0,
+            "losses": 1
         }
     }
 }
