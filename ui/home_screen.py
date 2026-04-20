@@ -2,6 +2,7 @@ import pygame
 import os
 import sys
 from config import settings
+from ui.guide_screen import GuideScreen
 from ui.human_vs_human_home_screen_ import HumanVsHumanHomeScreen
 from ui.human_vs_bot_choose_level_screeen_ import HumanVsBotChooseLevelScreen
 
@@ -94,7 +95,7 @@ class HomeScreen:
                 elif self.btn_bot_rect.collidepoint(mouse_pos):
                     return HumanVsBotChooseLevelScreen(self.screen)
                 elif self.btn_guide_rect.collidepoint(mouse_pos):
-                    print("Guide button clicked")
+                    return GuideScreen(self.screen)
                 elif self.btn_exit_rect.collidepoint(mouse_pos):
                     print("Exit button clicked")
                     pygame.quit()
