@@ -78,6 +78,7 @@ class Board:
         piece = self.selected_piece
         from_pos = piece.position
         move_type = move_data["type"]
+        extra_data = move_data.get("extra_data") or {}
         target = self.get_piece_at(to_x, to_y)
         self.combat_logs = []
 
@@ -95,10 +96,14 @@ class Board:
             target = self.get_piece_at(to_x, to_y)
             if not target:
                 return False
-            target.add_to_stack(piece)
-            self.pieces.remove(piece)
+            carrier, passenger = _resolve_combine_roles(piece, target)
+            if carrier is None or passenger is None:
+                return False
+            carrier.add_to_stack(passenger)
+            if passenger in self.pieces:
+                self.pieces.remove(passenger)
             self.last_move_to = (to_x, to_y)
-            self.combat_logs.append(f"Combined {piece.type.name} into {target.type.name}")
+            self.combat_logs.append(f"Combined {passenger.type.name} into {carrier.type.name}")
         elif move_type == MoveType.DEPLOY:
             if not piece.stacked_pieces:
                 return False
@@ -140,14 +145,37 @@ class Board:
                     f"{piece.type.name}{from_pos} destroy {target.type.name}{(to_x, to_y)} and was destroyed"
                 )
         else:
-            piece.move_to((to_x, to_y))
-            self.last_move_to = (to_x, to_y)
-            if move_type == MoveType.CAPTURE_REPLACE and target:
-                self.combat_logs.append(
-                    f"{piece.type.name}{from_pos} destroy {target.type.name}{(to_x, to_y)} and occupied {(to_x, to_y)}"
-                )
+            if move_type == MoveType.CAPTURE_REPLACE and extra_data.get("weapon") == "navy_artillery":
+                artillery_piece = _extract_stacked_piece(piece, PieceType.ARTILLERY)
+                if artillery_piece is None:
+                    return False
+                artillery_piece.move_to((to_x, to_y))
+                self.pieces.append(artillery_piece)
+                self.selected_piece = artillery_piece
+                self.last_move_to = (to_x, to_y)
+                if target:
+                    self.combat_logs.append(
+                        f"ARTILLERY from NAVY{from_pos} destroy {target.type.name}{(to_x, to_y)} and occupied {(to_x, to_y)}"
+                    )
             else:
-                self.combat_logs.append(f"{piece.type.name}{from_pos} -> {(to_x, to_y)}")
+                piece.move_to((to_x, to_y))
+                self.last_move_to = (to_x, to_y)
+                if move_type == MoveType.CAPTURE_REPLACE and target:
+                    weapon = extra_data.get("weapon")
+                    if weapon == "anti_ship_missile":
+                        self.combat_logs.append(
+                            f"NAVY{from_pos} fired anti-ship missile, destroy {target.type.name}{(to_x, to_y)} and occupied {(to_x, to_y)}"
+                        )
+                    elif weapon == "navy_artillery":
+                        self.combat_logs.append(
+                            f"{piece.type.name}{from_pos} destroy {target.type.name}{(to_x, to_y)} and occupied {(to_x, to_y)}"
+                        )
+                    else:
+                        self.combat_logs.append(
+                            f"{piece.type.name}{from_pos} destroy {target.type.name}{(to_x, to_y)} and occupied {(to_x, to_y)}"
+                        )
+                else:
+                    self.combat_logs.append(f"{piece.type.name}{from_pos} -> {(to_x, to_y)}")
 
         self.check_heroic_promotion()
         self._check_game_over()
@@ -276,3 +304,30 @@ def _clone_piece(piece: Piece):
     copied_piece = Piece(piece.id, piece.type, piece.color, piece.position, piece.is_hero)
     copied_piece.stacked_pieces = [_clone_piece(stacked_piece) for stacked_piece in piece.stacked_pieces]
     return copied_piece
+
+
+def _extract_stacked_piece(piece: Piece, piece_type: PieceType):
+    for index in range(len(piece.stacked_pieces) - 1, -1, -1):
+        stacked_piece = piece.stacked_pieces[index]
+        if stacked_piece.type == piece_type:
+            return piece.stacked_pieces.pop(index)
+    return None
+
+
+def _resolve_combine_roles(piece_a: Piece, piece_b: Piece):
+    if piece_a.type == PieceType.HEADQUARTERS and piece_b.type == PieceType.COMMANDER:
+        return piece_a, piece_b
+    if piece_b.type == PieceType.HEADQUARTERS and piece_a.type == PieceType.COMMANDER:
+        return piece_b, piece_a
+
+    if piece_a.type == PieceType.NAVY and piece_b.type in {PieceType.ARTILLERY, PieceType.ANTIAIR, PieceType.MISSILE}:
+        return piece_a, piece_b
+    if piece_b.type == PieceType.NAVY and piece_a.type in {PieceType.ARTILLERY, PieceType.ANTIAIR, PieceType.MISSILE}:
+        return piece_b, piece_a
+
+    if piece_a.type == PieceType.ENGINEER and piece_b.type in {PieceType.ARTILLERY, PieceType.ANTIAIR, PieceType.MISSILE}:
+        return piece_a, piece_b
+    if piece_b.type == PieceType.ENGINEER and piece_a.type in {PieceType.ARTILLERY, PieceType.ANTIAIR, PieceType.MISSILE}:
+        return piece_b, piece_a
+
+    return None, None

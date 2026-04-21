@@ -42,10 +42,10 @@ class HumanVsBotChooseLevelScreen:
             if event.button == 1:
                 mouse_pos = event.pos
                 if self.btn_easy_rect.collidepoint(mouse_pos):
-                    return HumanVsBotHomeScreen(self.screen)
+                    return HumanVsBotHomeScreen(self.screen, difficulty="easy")
                 elif self.btn_normal_rect.collidepoint(mouse_pos):
-                    return HumanVsBotHomeScreen(self.screen)
+                    return HumanVsBotHomeScreen(self.screen, difficulty="normal")
                 elif self.btn_hard_rect.collidepoint(mouse_pos):
-                    return HumanVsBotHomeScreen(self.screen)
+                    return HumanVsBotHomeScreen(self.screen, difficulty="hard")
                 elif self.btn_asian_rect.collidepoint(mouse_pos):
-                    return HumanVsBotHomeScreen(self.screen)
+                    return HumanVsBotHomeScreen(self.screen, difficulty="asian")

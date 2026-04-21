@@ -43,6 +43,14 @@
         "gf": {
             "wins": 0,
             "losses": 1
+        },
+        "Bot (Easy)": {
+            "wins": 2,
+            "losses": 0
+        },
+        "Human": {
+            "wins": 0,
+            "losses": 2
         }
     }
 }

@@ -51,7 +51,7 @@ def get_valid_moves(piece, board):
         target_piece = board.get_piece_at(tx, ty)
         if target_piece:
             if target_piece.color == piece.color:
-                if allow_combine and _can_combine(piece, target_piece):
+                if allow_combine and (_can_combine(piece, target_piece) or _can_combine(target_piece, piece)):
                     add_move(MoveType.COMBINE, tx, ty)
                 return
             capture_type = _get_capture_type(piece, target_piece, board, (x, y), (tx, ty))
@@ -70,7 +70,7 @@ def get_valid_moves(piece, board):
                 target_piece = board.get_piece_at(tx, ty)
                 if target_piece:
                     if target_piece.color == piece.color:
-                        if _can_combine(piece, target_piece):
+                        if _can_combine(piece, target_piece) or _can_combine(target_piece, piece):
                             add_move(MoveType.COMBINE, tx, ty)
                     else:
                         capture_type = _get_capture_type(piece, target_piece, board, (x, y), (tx, ty))
@@ -94,7 +94,7 @@ def get_valid_moves(piece, board):
         add_slide(ALL_DIRS if piece.is_hero else STRAIGHT_DIRS, 3 if piece.is_hero else 2)
     elif piece.type == PieceType.MISSILE:
         for dx, dy in _get_missile_pattern(piece):
-            add_step(x + dx, y + dy)
+            add_step(x + dx, y + dy, allow_combine=True)
     elif piece.type == PieceType.COMMANDER:
         add_slide(ALL_DIRS if piece.is_hero else STRAIGHT_DIRS, max(COLS, ROWS))
     elif piece.type == PieceType.ARTILLERY:
@@ -122,7 +122,7 @@ def _add_artillery_attacks(piece, board, add_move):
             target_piece = board.get_piece_at(tx, ty)
             if target_piece is None or target_piece.color == piece.color:
                 continue
-            move_type = MoveType.CAPTURE_NO_REPLACE if get_zone(tx, ty) == Zone.SEA else MoveType.CAPTURE_REPLACE
+            move_type = _get_artillery_capture_type((x, y), (tx, ty))
             add_move(move_type, tx, ty)
 
 
@@ -154,7 +154,10 @@ def _add_airforce_moves(piece, board, add_move):
             if target_piece.color == piece.color:
                 continue
 
-            if target_piece.type in {PieceType.ANTIAIR, PieceType.MISSILE} and not piece.is_hero:
+            if (
+                target_piece.type in {PieceType.ANTIAIR, PieceType.MISSILE}
+                or (target_piece.type == PieceType.NAVY and _stack_contains_type(target_piece, PieceType.ANTIAIR))
+            ) and not piece.is_hero:
                 add_move(MoveType.MUTUAL_DESTROY, tx, ty)
                 continue
 
@@ -196,11 +199,7 @@ def _add_navy_land_artillery_attacks(piece, board, add_move):
             if get_zone(tx, ty) != Zone.LAND:
                 break
 
-            move_type = (
-                MoveType.CAPTURE_REPLACE
-                if _navy_attack_requires_replacement((x, y), (tx, ty))
-                else MoveType.CAPTURE_NO_REPLACE
-            )
+            move_type = _get_navy_artillery_capture_type((x, y), (tx, ty))
             add_move(move_type, tx, ty, {"weapon": "navy_artillery"})
 
 
@@ -219,9 +218,9 @@ def _add_navy_antiship_attacks(piece, board, add_move):
             if target_piece.color == piece.color:
                 continue
             if target_piece.type != PieceType.NAVY:
-                break
+                continue
             if not _is_navy_antiship_target_square(tx, ty):
-                break
+                continue
 
             add_move(MoveType.CAPTURE_REPLACE, tx, ty, {"weapon": "anti_ship_missile"})
             break
@@ -320,7 +319,7 @@ def _can_piece_enter_square(piece_type, x, y):
     if piece_type == PieceType.AIRFORCE:
         return True
     if piece_type == PieceType.NAVY:
-        return zone in {Zone.SEA, Zone.RIVER}
+        return zone == Zone.SEA or (zone == Zone.RIVER and is_river_mouth(x, y))
     if piece_type == PieceType.HEADQUARTERS:
         return False
     if zone == Zone.FORD:
@@ -484,6 +483,18 @@ def _navy_attack_requires_replacement(start, dest):
             crossed_land = True
             break
     return not crossed_land
+
+
+def _get_artillery_capture_type(start, dest):
+    if get_zone(*dest) == Zone.SEA:
+        return MoveType.CAPTURE_NO_REPLACE
+    return MoveType.CAPTURE_REPLACE
+
+
+def _get_navy_artillery_capture_type(start, dest):
+    if _navy_attack_requires_replacement(start, dest):
+        return MoveType.CAPTURE_REPLACE
+    return MoveType.CAPTURE_NO_REPLACE
 
 
 def _is_navy_antiship_target_square(x, y):
