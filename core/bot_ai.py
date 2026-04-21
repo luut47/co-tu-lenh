@@ -61,7 +61,7 @@ def get_bot_move(board: Board, bot_color: Color, depth: int = 1) -> BotMove | No
         if not _apply_move(next_board, piece.id, move["to"][0], move["to"][1], move["type"]):
             continue
 
-        score = _minimax_search(
+        score = _alpha_beta_search(
             next_board,
             effective_depth - 1,
             bot_color,
@@ -89,7 +89,7 @@ def get_bot_move(board: Board, bot_color: Color, depth: int = 1) -> BotMove | No
     return random.choice(best_moves)
 
 
-def _minimax_search(
+def _alpha_beta_search(
     board: Board,
     depth: int,
     perspective: Color,
@@ -136,7 +136,7 @@ def _minimax_search(
             next_board = _clone_board(board)
             if not _apply_move(next_board, piece.id, move["to"][0], move["to"][1], move["type"]):
                 continue
-            score = _minimax_search(next_board, depth - 1, perspective, alpha, beta, deadline, transposition)
+            score = _alpha_beta_search(next_board, depth - 1, perspective, alpha, beta, deadline, transposition)
             best_score = max(best_score, score)
             alpha = max(alpha, best_score)
             if beta <= alpha:
@@ -152,7 +152,7 @@ def _minimax_search(
         next_board = _clone_board(board)
         if not _apply_move(next_board, piece.id, move["to"][0], move["to"][1], move["type"]):
             continue
-        score = _minimax_search(next_board, depth - 1, perspective, alpha, beta, deadline, transposition)
+        score = _alpha_beta_search(next_board, depth - 1, perspective, alpha, beta, deadline, transposition)
         best_score = min(best_score, score)
         beta = min(beta, best_score)
         if beta <= alpha:

@@ -11,6 +11,8 @@ from core.move_rules import MoveType
 from core.piece import Color
 from core.turn_timer import TurnTimer
 from services.player_achievement_service import PlayerAchievementService
+from services.sound_manager import SoundManager
+from ui.dialogs.setting_menu import SettingMenu
 
 
 class HumanVsBotHomeScreen:
@@ -121,6 +123,8 @@ class HumanVsBotHomeScreen:
         )
 
         self.last_time = pygame.time.get_ticks()
+        self.setting_menu = SettingMenu(self.screen)
+        self.sound_manager = SoundManager()
         self._init_game_ui()
         self._queue_bot_turn()
 
@@ -265,6 +269,8 @@ class HumanVsBotHomeScreen:
 
         self.board_renderer.draw(self.screen, self.board)
 
+        self.setting_menu.draw(self.sound_manager.is_sound_on())
+
         self.screen.blit(self.btn_surrender, self.btn_surrender_rect)
         if self.undo_stack and not self.match_finished:
             self.screen.blit(self.btn_undo, self.btn_undo_rect)
@@ -297,9 +303,29 @@ class HumanVsBotHomeScreen:
             y += 20
 
     def handle_event(self, event):
+        setting_action = self.setting_menu.handle_event(event)
+        if setting_action == "toggle":
+            self.sound_manager.play_button()
+            return self
+
+        if setting_action == "continue":
+            self.sound_manager.play_button()
+            return self
+
+        if setting_action == "sound":
+            self.sound_manager.play_button()
+            self.sound_manager.toggle_sound()
+            return self
+
+        if setting_action == "home":
+            self.sound_manager.play_button()
+            from ui.home_screen import HomeScreen
+            return HomeScreen(self.screen)
+
         if self.show_winner_overlay:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.btn_invite_replay_rect.collidepoint(event.pos):
+                    self.sound_manager.play_button()
                     self.reset_match_state()
                 else:
                     self.show_winner_overlay = False
@@ -308,14 +334,20 @@ class HumanVsBotHomeScreen:
         if self.match_finished:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.btn_invite_replay_rect.collidepoint(event.pos):
+                    self.sound_manager.play_button()
                     self.reset_match_state()
+            return self
+
+        if self.setting_menu.is_open:
             return self
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1 and self.btn_surrender_rect.collidepoint(event.pos):
+                self.sound_manager.play_button()
                 self._end_game(Color.BLUE)
                 return self
             if event.button == 1 and self.btn_undo_rect.collidepoint(event.pos):
+                self.sound_manager.play_button()
                 self._undo_last_round()
                 return self
 
@@ -349,6 +381,10 @@ class HumanVsBotHomeScreen:
             undo_snapshot = self._capture_undo_state()
             success = self.board.move_piece(x, y, preferred_type=preferred_type)
             if success:
+                if preferred_type == MoveType.CAPTURE_REPLACE:
+                    self.sound_manager.play_eat()
+                else:
+                    self.sound_manager.play_move()
                 self.undo_stack.append(undo_snapshot)
                 self._append_logs(piece.color, piece, from_pos, x, y)
                 self._after_turn_change()
@@ -426,6 +462,10 @@ class HumanVsBotHomeScreen:
         if not success:
             return
 
+        if bot_move.move_type == MoveType.CAPTURE_REPLACE:
+            self.sound_manager.play_eat()
+        else:
+            self.sound_manager.play_move()
         self._append_logs(piece.color, piece, from_pos, bot_move.to_x, bot_move.to_y)
         self._after_turn_change()
 
